@@ -1,0 +1,39 @@
+import "MetricAlarm.proto";
+package topstack_MonitorQuery;
+
+option java_package = "com.transcend.monitor.message";
+option java_outer_classname = "DescribeAlarmHistoryMessage";
+
+message AlarmHistoryItem {
+    required string alarmName = 1;
+    optional string historyData = 2;
+    enum HistoryItemType {
+        ConfigurationUpdate = 0;
+        StateUpdate = 1;
+        Action = 2;
+    }
+    required HistoryItemType historyItemType = 3;
+    optional string historySummary = 4;
+    required string timestamp = 5;
+}
+
+message DescribeAlarmHistoryRequest {
+    required bool typeId = 402;
+    required string requestId = 1;
+    required string callerAccessKey = 2;
+    optional string action = 3 [default = ""];
+    optional string alarmName = 4;
+    optional string historyItemType = 5;
+    optional string startDate = 6;
+    optional string endDate = 7;
+    optional uint32 maxRecords = 8;
+    optional string nextToken = 9;
+}
+
+message DescribeAlarmHistoryResponse {
+    required bool typeId = 403;
+    required string requestId = 1;
+    required string callerAccessKey = 2;
+    repeated AlarmHistoryItem alarmHistoryItem = 3;
+    required string nextToken = 4;
+}

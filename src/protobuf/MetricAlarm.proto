@@ -1,0 +1,108 @@
+package topstack_MonitorQuery;
+
+option java_package = "com.transcend.monitor.message";
+option java_outer_classname = "MetricAlarmMessage";
+
+message Dimension {
+    required string name = 1;
+    required string value = 2;
+}
+
+enum AlarmState {
+    OK = 0;
+    ALARM = 1;
+    INSUFFICIENT_DATA = 2;
+}
+
+enum Statistic {
+    SampleCount = 0;
+    Average = 1;
+    Sum = 2;
+    Minimum = 3;
+    Maximum = 4;
+}
+
+enum Unit {
+    Seconds = 0;
+    Microseconds = 1;
+    Milliseconds = 2;
+    Bytes = 3;
+    Kilobytes = 4;
+    Megabytes = 5;
+    Gigabytes = 6;
+    Terabytes = 7;
+    Bits = 8;
+    Kilobits = 9;
+    Megabits = 10;
+    Gigabits = 11;
+    Terabits = 12;
+    Percent = 13;
+    Count = 14;
+    BytesPerSecond = 15;
+    KilobytesPerSecond = 16;
+    MegabytesPerSecond = 17;
+    GigabytesPerSecond = 18;
+    TerabytesPerSecond = 19;
+    BitsPerSecond = 20;
+    KilobitsPerSecond = 21;
+    MegabitsPerSecond = 22;
+    GigabitsPerSecond = 23;
+    TerabitsPerSecond = 24;
+    CountPerSecond = 25;
+    None = 26;
+}
+
+enum ComparisonOperator {
+    GreaterThanOrEqualToThreshold = 0;
+    GreaterThanThreshold = 1;
+    LessThanThreshold = 2;
+    LessThanOrEqualToThreshold = 3;
+}
+
+message MetricAlarmToPut {
+    required string alarmName = 1;
+    // not for put: required string alarmArn = 2;
+    optional string alarmDescription = 3;
+    //required string alarmConfigurationUpdatedTimestamp = 4;
+    optional bool actionsEnabled = 5 [default = true];
+    repeated string oKAction = 6;
+    repeated string alarmAction = 7;
+    repeated string insufficientDataAction = 8;
+    //required AlarmState stateValue = 9;
+    //required string stateReason = 10 [default = ""];
+    //required string stateReasonData = 11 [default = ""];
+    //required string stateUpdatedTimestamp = 12;
+    required string metricName = 13;
+    optional string namespace = 14;
+    required Statistic statistic = 15;
+    repeated Dimension dimension = 16;
+    required uint32 period = 17;
+    optional string unit = 18;
+    required uint32 evaluationPeriods = 19;
+    required double threshold = 20;
+    required ComparisonOperator comparisonOperator = 21;
+}
+
+message MetricAlarm {
+    required string alarmName = 1;
+    optional string alarmArn = 2;
+    required string alarmDescription = 3;
+    required string alarmConfigurationUpdatedTimestamp = 4;
+    required bool actionsEnabled = 5;
+    repeated string oKAction = 6;
+    repeated string alarmAction = 7;
+    repeated string insufficientDataAction = 8;
+    required AlarmState stateValue = 9;
+    required string stateReason = 10 [default = ""];
+    required string stateReasonData = 11 [default = ""];
+    optional string stateUpdatedTimestamp = 12;
+    required string metricName = 13;
+    required string namespace = 14;
+    required Statistic statistic = 15;
+    repeated Dimension dimension = 16;
+    required uint32 period = 17;
+    required string unit = 18;
+    required uint32 evaluationPeriods = 19;
+    required double threshold = 20;
+    required ComparisonOperator comparisonOperator = 21;
+}

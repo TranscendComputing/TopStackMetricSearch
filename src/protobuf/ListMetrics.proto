@@ -1,0 +1,25 @@
+import "MetricAlarm.proto";
+import "Metric.proto";
+package topstack_MonitorQuery;
+
+option java_package = "com.transcend.monitor.message";
+option java_outer_classname = "ListMetricsMessage";
+
+message ListMetricsRequest {
+    required bool typeId = 416;
+    required string requestId = 1;
+    required string callerAccessKey = 2;
+    optional string action = 3 [default = ""];
+    optional string namespace = 4;
+    optional string metricName = 5;
+    repeated Dimension dimension = 6;
+    optional string nextToken = 7;
+}
+
+message ListMetricsResponse {
+    required bool typeId = 417;
+    required string requestId = 1;
+    required string callerAccessKey = 2;
+    repeated Metric metric = 3;
+    required string nextToken = 4;
+}

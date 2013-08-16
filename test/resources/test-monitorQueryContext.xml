@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:oxm="http://www.springframework.org/schema/oxm"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+    xmlns:lang="http://www.springframework.org/schema/lang"
+    xmlns:p="http://www.springframework.org/schema/p"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:util="http://www.springframework.org/schema/util"
+    xmlns="http://www.springframework.org/schema/beans"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-3.0.xsd
+        http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-3.0.xsd
+        http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang-3.0.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd" >
+
+    <!-- auto-inject, autowire using annotations -->
+    <context:annotation-config />
+
+    <import resource="cloud-config.xml" />
+
+    <!-- inject core action classes (ActionTestHelper, etc.) -->
+    <context:component-scan base-package="com.msi.tough.query" />
+    <context:component-scan base-package="com.msi.monitorquery" />
+    <context:component-scan base-package="com.msi.tough.query.monitor.actions" />
+    <context:component-scan base-package="com.transcend.monitor.helper" />
+    <!-- inject project action classes (Describe, etc.) -->
+
+    <!-- service definitions for monitor query -->
+    <bean id="UnsupportedAction"
+        class="com.msi.tough.query.UnsupportedAction"/>
+
+    <bean id="DeleteAlarms"
+        class="com.transcend.monitor.actions.DeleteAlarms"/>
+
+    <bean id="DeleteAlarmsWorker"
+        class="com.transcend.monitor.worker.DeleteAlarmsWorker"/>
+
+    <bean id="DescribeAlarms"
+        class="com.transcend.monitor.actions.DescribeAlarms"/>
+
+    <bean id="DescribeAlarmsWorker"
+        class="com.transcend.monitor.worker.DescribeAlarmsWorker"/>
+
+    <bean id="DescribeAlarmsForMetric"
+        class="com.transcend.monitor.actions.DescribeAlarmsForMetric"/>
+
+    <bean id="DescribeAlarmsForMetricWorker"
+        class="com.transcend.monitor.worker.DescribeAlarmsForMetricWorker"/>
+
+    <bean id="DescribeAlarmHistory"
+        class="com.transcend.monitor.actions.DescribeAlarmHistory"/>
+
+    <bean id="DescribeAlarmHistoryWorker"
+        class="com.transcend.monitor.worker.DescribeAlarmHistoryWorker"/>
+
+    <bean id="DisableAlarmActions"
+        class="com.transcend.monitor.actions.DisableAlarmActions"/>
+
+    <bean id="DisableAlarmActionsWorker"
+        class="com.transcend.monitor.worker.DisableAlarmActionsWorker"/>
+
+    <bean id="EnableAlarmActions"
+        class="com.transcend.monitor.actions.EnableAlarmActions"/>
+
+    <bean id="EnableAlarmActionsWorker"
+        class="com.transcend.monitor.worker.EnableAlarmActionsWorker"/>
+
+    <bean id="GetMetricStatistics"
+        class="com.transcend.monitor.actions.GetMetricStatistics"/>
+
+    <bean id="GetMetricStatisticsWorker"
+        class="com.transcend.monitor.worker.GetMetricStatisticsWorker"/>
+
+    <bean id="ListMetrics"
+        class="com.transcend.monitor.actions.ListMetrics"/>
+
+    <bean id="ListMetricsWorker"
+        class="com.transcend.monitor.worker.ListMetricsWorker"/>
+
+    <bean id="PutMetricAlarm"
+        class="com.transcend.monitor.actions.PutMetricAlarm"/>
+
+    <bean id="PutMetricAlarmWorker"
+        class="com.transcend.monitor.worker.PutMetricAlarmWorker"/>
+
+    <bean id="PutMetricData"
+        class="com.transcend.monitor.actions.PutMetricData"/>
+
+    <bean id="PutMetricDataWorker"
+        class="com.transcend.monitor.worker.PutMetricDataWorker"/>
+
+    <bean id="SetAlarmState"
+        class="com.transcend.monitor.actions.SetAlarmState"/>
+
+    <bean id="SetAlarmStateWorker"
+        class="com.transcend.monitor.worker.SetAlarmStateWorker"/>
+
+    <util:map id="actions">
+        <entry key="DeleteAlarms" value-ref="DeleteAlarms"/>
+        <entry key="DescribeAlarms" value-ref="DescribeAlarms"/>
+        <entry key="DescribeAlarmsForMetric" value-ref="DescribeAlarmsForMetric"/>
+        <entry key="DescribeAlarmHistory" value-ref="DescribeAlarmHistory"/>
+        <entry key="DisableAlarmActions" value-ref="DisableAlarmActions"/>
+        <entry key="EnableAlarmActions" value-ref="EnableAlarmActions"/>
+        <entry key="GetMetricStatistics" value-ref="GetMetricStatistics"/>
+        <entry key="ListMetrics" value-ref="ListMetrics"/>
+        <entry key="PutMetricAlarm" value-ref="PutMetricAlarm"/>
+        <entry key="PutMetricData" value-ref="PutMetricData"/>
+        <entry key="SetAlarmState" value-ref="SetAlarmState"/>
+    </util:map>
+
+    <bean id="monitorQueryServiceAsync"
+        class="com.msi.tough.query.AsyncServiceImpl">
+        <constructor-arg ref="actions"/>
+    </bean>
+
+    <bean class="com.msi.tough.core.AppctxInjector"/>
+
+    <bean id="servicesPropertyConfigurer"
+        class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+                <list>
+                        <value>classpath*:/*.properties</value>
+                        <value>classpath*:/monitorquery.test.ports</value>
+                        <value>classpath*:/compute.ports</value>
+                </list>
+        </property>
+    </bean>
+
+    <bean id="endpoint" class="java.lang.String">
+        <constructor-arg value="ActionIn"/>
+    </bean>
+    <bean id="rawEndpoint" class="java.lang.String">
+        <constructor-arg value="DirectToZMQEntry"/>
+    </bean>
+
+    <bean id="remoteEndpoint" class="java.lang.String">
+        <constructor-arg value="tcp://${deploy.ip}:${remote.monitorquery.port}"/>
+    </bean>
+
+    <bean id="recvEndpoint" class="java.lang.String">
+        <constructor-arg value="tcp://*:${response.monitorquery.port}"/>
+    </bean>
+
+    <bean id="returnAddress" class="java.lang.String">
+        <constructor-arg value="tcp://${tester.host}:${response.monitorquery.port}"/>
+    </bean>
+
+    <bean id="workflow" factory-method="getInstance"
+    class="com.msi.tough.workflow.core.MuleWorkflow">
+    </bean>
+
+    <util:list id="possibleTypes">
+        <value>com.msi.tough.message.CoreMessage$ErrorResult</value>
+    </util:list>
+
+    <bean id="remoteWorkflow" factory-method="getInstance" destroy-method="destroy"
+    class="com.msi.tough.workflow.core.RemoteWorkflow">
+        <property name="possibleTypes" ref="possibleTypes"/>
+    </bean>
+
+    <util:list id="computePossibleTypes">
+        <value>com.msi.tough.message.CoreMessage$ErrorResult</value>
+        <value>com.transcend.compute.message.RunInstancesMessage$RunInstancesResponseMessage</value>
+    </util:list>
+
+    <bean id="remoteComputeWorkflow" factory-method="getInstance" destroy-method="destroy"
+    class="com.msi.tough.workflow.core.RemoteWorkflow">
+        <property name="remoteEndpoint" value="tcp://${deploy.ip}:${compute.port}" />
+        <property name="recvEndpoint" value="tcp://*:${response.compute.port}" />
+        <property name="returnAddress" value="tcp://${tester.host}:${response.compute.port}" />
+        <property name="possibleTypes" ref="computePossibleTypes"/>
+    </bean>
+
+    <bean id="workflowIgniter" factory-method="getInstance"
+    class="com.msi.tough.workflow.core.MuleIgniter">
+        <property name="configFiles" value="mule-workflow-config.xml,mule-test-transports-config.xml"/>
+    </bean>
+
+    <bean id="workflowSubmitter"
+        class="com.msi.tough.workflow.WorkflowSubmitter"/>
+
+    <bean id="workflowSubmitterToWebapp"
+        class="com.msi.tough.workflow.WorkflowSubmitter">
+        <property name="workflow" ref="remoteWorkflow"/>
+    </bean>
+
+    <bean id="workflowSubmitterToCompute"
+        class="com.msi.tough.workflow.WorkflowSubmitter">
+        <property name="workflow" ref="remoteComputeWorkflow"/>
+    </bean>
+
+    <bean id="actionHelper" class="com.msi.tough.query.ActionHelper">
+    </bean>
+
+    <!-- compute setup, for creating instances -->
+    <bean id="computeClient" class="com.amazonaws.services.ec2.AmazonEC2Client" >
+        <constructor-arg ref="basicAWSCredentials" />
+        <property name="endpoint" value="#{ defaultAvailabilityZone == 'us-east-1a' ? 'http://ec2.us-east-1.amazonaws.com/' : 'http://${deploy.ip}:8080/Compute/comp-async/' }" />
+    </bean>
+
+    <bean id="baseImageId" class="java.lang.String">
+        <constructor-arg value="${base.image.id}"/>
+   </bean>
+
+    <bean id="defaultFlavor" class="java.lang.String">
+        <constructor-arg value="${default.flavor}"/>
+   </bean>
+
+    <bean id="runningInstanceHelper" class="com.msi.tough.helper.RunningInstanceHelper" >
+    </bean>
+
+    <bean
+        id="log4jInitializer"
+        class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+
+        <property
+            name="targetClass"
+            value="org.springframework.util.Log4jConfigurer" />
+
+        <property name="targetMethod" value="initLogging" />
+
+        <property name="arguments" >
+            <list>
+                <value>classpath:log4j.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="accessKey" class="java.lang.String">
+        <constructor-arg value="${test.accessKey}"/>
+    </bean>
+
+    <bean id="secretKey" class="java.lang.String">
+        <constructor-arg value="${test.secretKey}"/>
+    </bean>
+    <bean id="testAccountId" class="java.lang.Long">
+        <constructor-arg value="1"/>
+    </bean>
+
+    <bean id="limitedQuotaAccessKey" class="java.lang.String">
+        <constructor-arg value="${test.limitedQuotaAccessKey}"/>
+    </bean>
+
+    <bean id="limitedQuotaSecretKey" class="java.lang.String">
+        <constructor-arg value="${test.limitedQuotaSecretKey}"/>
+    </bean>
+
+    <bean id="limitedQuotaOwnerId" class="java.lang.String">
+        <constructor-arg value="${test.limitedQuotaOwnerId}"/>
+    </bean>
+
+    <bean id="limitedQuotaZone" class="java.lang.String">
+        <constructor-arg value="${test.limitedQuotaZone}"/>
+    </bean>
+
+    <bean id="DB_PASSWORD" class="java.lang.String">
+        <constructor-arg value="${db.password}"></constructor-arg>
+    </bean>
+
+    <bean id="basicAWSCredentials" class="com.amazonaws.auth.BasicAWSCredentials" >
+        <constructor-arg value="${test.accessKey}" />
+        <constructor-arg value="${test.secretKey}" />
+    </bean>
+
+    <bean id="badAWSCredentials" class="com.amazonaws.auth.BasicAWSCredentials" >
+        <constructor-arg value="123412341234" />
+        <constructor-arg value="456456456456" />
+    </bean>
+
+    <bean id="cloudWatchClient" class="com.amazonaws.services.cloudwatch.AmazonCloudWatchClient" >
+        <constructor-arg ref="basicAWSCredentials" />
+        <property name="endpoint" value="http://${deploy.ip}:8080/MonitorQuery/ec2" />
+    </bean>
+
+    <bean id="cloudWatchClientV2" class="com.amazonaws.services.cloudwatch.AmazonCloudWatchClient" >
+        <constructor-arg ref="basicAWSCredentials" />
+        <property name="endpoint" value="http://${deploy.ip}:8080/MonitorQuery/monitorquery-async/" />
+    </bean>
+
+    <bean id="cloudWatchClientBadCreds" class="com.amazonaws.services.cloudwatch.AmazonCloudWatchClient" >
+        <constructor-arg ref="badAWSCredentials" />
+        <property name="endpoint" value="http://${deploy.ip}:8080/MonitorQuery/monitorquery-async/" />
+    </bean>
+
+    <bean id="targetServer" class="java.lang.String">
+        <constructor-arg value="${deploy.ip}"/>
+    </bean>
+
+    <bean id="defaultAvailabilityZone" class="java.lang.String">
+        <constructor-arg value="${default.availability.zone}"/>
+    </bean>
+
+    <bean id="MON_ALARMSTORE" class="com.msi.tough.monitor.common.manager.db.RDBMSAlarmStore"></bean>
+    <bean id="alarmStore" class="com.msi.tough.monitor.common.manager.db.RDBMSAlarmStore"></bean>
+
+    <bean id="security" factory-method="getInstance"
+        class="com.msi.tough.security.AESSecurity">
+    </bean>
+
+    <!-- stand-in for full cloud config, with only the current test. -->
+    <util:map id="configuration0">
+    </util:map>
+
+    <bean id="configuration" factory-method="merge" class="com.msi.tough.core.MapUtil">
+        <constructor-arg ref="cloud-config"></constructor-arg>
+        <constructor-arg ref="configuration0"></constructor-arg>
+    </bean>
+
+    <bean id="appctx" factory-method="getInstanceForInjection"
+        class="com.msi.tough.core.Appctx">
+        <property name="configuration" ref="configuration"/>
+        <!-- use a single thread executor, so tests don't have to wait. -->
+        <property name="executorServiceInstance">
+            <bean class="com.msi.tough.utils.SynchronousExecutor"/>
+        </property>
+    </bean>
+
+    <bean class="com.msi.tough.core.AppctxInjector"/>
+
+    <bean id="hibernateUtil" class="com.msi.tough.core.HibernateUtil">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+
+    <bean id="sessionFactory"
+        class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+        <property name="dataSource" ref="testConnection" />
+        <property name="configLocation" value="classpath:hibernate.cfg.xml"></property>
+        <property name="configurationClass" value="org.hibernate.cfg.AnnotationConfiguration"></property>
+        <property name="hibernateProperties">
+            <value>hibernate.dialect=org.hibernate.dialect.MySQL5InnoDBDialect
+                hibernate.cache.provider_class=org.hibernate.cache.NoCacheProvider
+                hibernate.show_sql=true
+                hibernate.hbm2ddl.auto=update
+            </value>
+        </property>
+    </bean>
+
+    <bean id="testConnection" class="org.apache.commons.dbcp.BasicDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver" />
+        <property name="url" value="jdbc:mysql://${deploy.ip}:3306/msi" />
+        <property name="username" value="msi" />
+        <property name="password" value="${db.password}" />
+        <property name="defaultAutoCommit" value="false"></property>
+        <property name="initialSize" value="1"></property>
+        <property name="maxActive" value="5"></property>
+        <property name="testWhileIdle" value="false"></property>
+        <property name="testOnBorrow" value="false"></property>
+        <property name="testOnReturn" value="false"></property>
+        <property name="validationQuery" value="SELECT 1"></property>
+        <property name="timeBetweenEvictionRunsMillis" value="5000"></property>
+        <property name="minIdle" value="1"></property>
+        <property name="maxWait" value="5000"></property>
+        <property name="removeAbandoned" value="false"></property>
+    </bean>
+
+</beans>

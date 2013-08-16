@@ -1,0 +1,20 @@
+import "MetricAlarm.proto";
+package topstack_MonitorQuery;
+
+option java_package = "com.transcend.monitor.message";
+option java_outer_classname = "DisableAlarmActionsMessage";
+
+
+message DisableAlarmActionsRequest {
+    required bool typeId = 408;
+    required string requestId = 1;
+    required string callerAccessKey = 2;
+    optional string action = 3 [default = ""];
+    repeated string alarmName = 4;
+}
+
+message DisableAlarmActionsResponse {
+    required bool typeId = 409;
+    required string requestId = 1;
+    required string callerAccessKey = 2;
+}

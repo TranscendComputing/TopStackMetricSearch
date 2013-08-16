@@ -1,0 +1,4 @@
+monitorquery.port =5480
+remote.monitorquery.port=5580
+response.monitorquery.port=5481
+response.compute.port=5482

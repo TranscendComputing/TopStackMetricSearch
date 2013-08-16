@@ -1,0 +1,17 @@
+import "MetricAlarm.proto";
+package topstack_MonitorQuery;
+
+option java_package = "com.transcend.monitor.message";
+option java_outer_classname = "MetricMessage";
+
+message Metadata {
+    required string name = 1;
+    required string value = 2;
+}
+
+message Metric {
+    required string metricName = 1;
+    required string namespace = 2;
+    repeated Dimension dimension = 3;
+    repeated Metadata metadata = 4;
+}

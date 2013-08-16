@@ -1,0 +1,22 @@
+import "MetricAlarm.proto";
+package topstack_MonitorQuery;
+
+option java_package = "com.transcend.monitor.message";
+option java_outer_classname = "SetAlarmStateMessage";
+
+message SetAlarmStateRequest {
+    required bool typeId = 424;
+    required string requestId = 1;
+    required string callerAccessKey = 2;
+    optional string action = 3 [default = ""];
+    required string alarmName = 4;
+    required AlarmState stateValue = 5;
+    required string stateReason = 6;
+    optional string stateReasonData = 7 [default = ""];
+}
+
+message SetAlarmStateResponse {
+    required bool typeId = 425;
+    required string requestId = 1;
+    required string callerAccessKey = 2;
+}

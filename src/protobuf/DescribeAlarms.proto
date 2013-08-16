@@ -1,0 +1,27 @@
+import "MetricAlarm.proto";
+package topstack_MonitorQuery;
+
+option java_package = "com.transcend.monitor.message";
+option java_outer_classname = "DescribeAlarmsMessage";
+
+
+message DescribeAlarmsRequest {
+    required bool typeId = 404;
+    required string requestId = 1;
+    required string callerAccessKey = 2;
+    optional string action = 3 [default = ""];
+    repeated string alarmName = 4;
+    optional string alarmNamePrefix = 5;
+    optional AlarmState stateValue = 6;
+    optional string actionPrefix = 7;
+    optional uint32 maxRecords = 8;
+    optional string nextToken = 9;
+}
+
+message DescribeAlarmsResponse {
+    required bool typeId = 405;
+    required string requestId = 1;
+    required string callerAccessKey = 2;
+    repeated MetricAlarm metricAlarm = 3;
+    required string nextToken = 4;
+}

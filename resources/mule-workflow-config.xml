@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:spring="http://www.springframework.org/schema/beans"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+      xmlns:protobuf="http://www.mulesoft.org/schema/mule/protobuf"
+      xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting"
+      xsi:schemaLocation="http://www.springframework.org/schema/beans
+      http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+        http://www.mulesoft.org/schema/mule/protobuf http://www.mulesoft.org/schema/mule/protobuf/current/mule-protobuf.xsd
+        http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd
+        http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+    <description>
+    This configuration uses REST services and ZeroMQ endpoints to receive
+    requests.
+    </description>
+
+    <configuration>
+    <default-threading-profile maxThreadsActive="3"/>
+    </configuration>
+
+    <custom-transformer name="ExceptionToString" class="com.msi.tough.workflow.core.ExceptionToString"/>
+    <custom-transformer name="ExceptionToErrorResponse" class="com.msi.tough.workflow.core.ExceptionToErrorResponse"/>
+    <custom-transformer name="HttpRequestToParameter" class="org.mule.transport.servlet.transformers.HttpRequestToParameter"/>
+    <custom-transformer name="ObjectToString" class="org.mule.transformer.simple.ObjectToString"/>
+
+    <spring:bean id="muleWorkflow" factory-method="getInstance"
+    class="com.msi.tough.workflow.core.MuleWorkflow">
+    </spring:bean>
+    <spring:bean id="zmqReturnProcessor" factory-method="getInstance"
+    destroy-method="destroy"
+    class="com.msi.tough.workflow.core.RemoteWorkflowResponder">
+    </spring:bean>
+
+    <!-- Global exception strategy; return an error response to requestor -->
+    <custom-exception-strategy name="sendErrorBack" class="com.msi.tough.workflow.core.MuleExceptionStrategy">
+            <outbound-endpoint ref="SystemErrorHandlerIn"/>
+    </custom-exception-strategy>
+
+    <!-- Global exception strategy; record abnormal termination of async tasks -->
+    <!-- TODO: async error recording -->
+
+    <!-- === Zero MQ processing === -->
+    <flow name="ZMQEntry">
+        <inbound-endpoint ref="DirectToZMQEntry"/>
+        <set-session-variable variableName="returnAddress" value="#[payload[1]]"/>
+        <expression-transformer evaluator="groovy" expression="payload[0]"/>
+        <first-successful>
+            <protobuf:deserialize protobufClass="com.transcend.monitor.message.DeleteAlarmsMessage$DeleteAlarmsRequest"/>
+            <protobuf:deserialize protobufClass="com.transcend.monitor.message.DescribeAlarmsMessage$DescribeAlarmsRequest"/>
+            <protobuf:deserialize protobufClass="com.transcend.monitor.message.DescribeAlarmsForMetricMessage$DescribeAlarmsForMetricRequest"/>
+            <protobuf:deserialize protobufClass="com.transcend.monitor.message.DescribeAlarmHistoryMessage$DescribeAlarmHistoryRequest"/>
+            <protobuf:deserialize protobufClass="com.transcend.monitor.message.DisableAlarmActionsMessage$DisableAlarmActionsRequest"/>
+            <protobuf:deserialize protobufClass="com.transcend.monitor.message.EnableAlarmActionsMessage$EnableAlarmActionsRequest"/>
+            <protobuf:deserialize protobufClass="com.transcend.monitor.message.GetMetricStatisticsMessage$GetMetricStatisticsRequest"/>
+            <protobuf:deserialize protobufClass="com.transcend.monitor.message.ListMetricsMessage.ListMetricsRequest"/>
+            <protobuf:deserialize protobufClass="com.transcend.monitor.message.PutMetricAlarmMessage$PutMetricAlarmRequest"/>
+            <protobuf:deserialize protobufClass="com.transcend.monitor.message.PutMetricDataMessage$PutMetricDataRequest"/>
+            <protobuf:deserialize protobufClass="com.transcend.monitor.message.SetAlarmStateMessage.SetAlarmStateRequest"/>
+        </first-successful>
+        <log-component />
+        <flow-ref name="ActionEntry"/>
+        <catch-exception-strategy>
+            <outbound-endpoint ref="SystemErrorHandlerIn"/>
+        </catch-exception-strategy>
+    </flow>
+
+    <!-- === Standard Action entry point processing === -->
+    <flow name="ActionEntry">
+        <inbound-endpoint ref="ActionIn"/>
+        <log-component />
+        <choice>
+            <when expression="payload instanceof com.transcend.monitor.message.DeleteAlarmsMessage$DeleteAlarmsRequest" evaluator="groovy">
+                <flow-ref name="DeleteAlarmsRequest"/>
+            </when>
+            <when expression="payload instanceof com.transcend.monitor.message.DescribeAlarmsMessage$DescribeAlarmsRequest" evaluator="groovy">
+                <flow-ref name="DescribeAlarmsRequest"/>
+            </when>
+            <when expression="payload instanceof com.transcend.monitor.message.DescribeAlarmsForMetricMessage$DescribeAlarmsForMetricRequest" evaluator="groovy">
+                <flow-ref name="DescribeAlarmsForMetricRequest"/>
+            </when>
+            <when expression="payload instanceof com.transcend.monitor.message.DescribeAlarmHistoryMessage$DescribeAlarmHistoryRequest" evaluator="groovy">
+                <flow-ref name="DescribeAlarmHistoryRequest"/>
+            </when>
+            <when expression="payload instanceof com.transcend.monitor.message.GetMetricStatisticsMessage$GetMetricStatisticsRequest" evaluator="groovy">
+                <flow-ref name="GetMetricStatisticsRequest"/>
+            </when>
+            <when expression="payload instanceof com.transcend.monitor.message.ListMetricsMessage.ListMetricsRequest" evaluator="groovy">
+                <flow-ref name="ListMetricsRequest"/>
+            </when>
+            <when expression="payload instanceof com.transcend.monitor.message.PutMetricAlarmMessage$PutMetricAlarmRequest" evaluator="groovy">
+                <flow-ref name="PutMetricAlarmRequest"/>
+            </when>
+            <when expression="payload instanceof com.transcend.monitor.message.PutMetricDataMessage$PutMetricDataRequest" evaluator="groovy">
+                <flow-ref name="PutMetricDataRequest"/>
+            </when>
+            <when expression="payload instanceof com.transcend.monitor.message.SetAlarmStateMessage.SetAlarmStateRequest" evaluator="groovy">
+                <flow-ref name="SetAlarmStateRequest"/>
+            </when>
+            <otherwise>
+                <flow-ref name="SystemErrorHandler"/>
+            </otherwise>
+        </choice>
+    </flow>
+
+    <!-- === Individual actions follow === -->
+
+    <!-- Request/Response flow for DeleteAlarms -->
+
+    <flow name="DeleteAlarmsRequest">
+        <component>
+            <spring-object bean="DeleteAlarmsWorker"/>
+        </component>
+
+        <flow-ref name="DeleteAlarmsResponse"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+
+    <flow name="DeleteAlarmsResponse" >
+        <choice>
+            <when expression="#[org.mule.util.StringUtils.isNotEmpty(sessionVars['returnAddress'])]">
+                <processor ref="zmqReturnProcessor"/>
+            </when>
+            <otherwise>
+                <component>
+                    <spring-object bean="DeleteAlarms"/>
+                </component>
+            </otherwise>
+        </choice>
+        <flow-ref name="ClientResponder"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+
+    <!-- Request/Response flow for DescribeAlarms -->
+
+    <flow name="DescribeAlarmsRequest">
+        <component>
+            <spring-object bean="DescribeAlarmsWorker"/>
+        </component>
+
+        <flow-ref name="DescribeAlarmsResponse"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+
+    <flow name="DescribeAlarmsResponse" >
+        <choice>
+            <when expression="#[org.mule.util.StringUtils.isNotEmpty(sessionVars['returnAddress'])]">
+                <processor ref="zmqReturnProcessor"/>
+            </when>
+            <otherwise>
+                <component>
+                    <spring-object bean="DescribeAlarms"/>
+                </component>
+            </otherwise>
+        </choice>
+        <flow-ref name="ClientResponder"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+
+    <!-- Request/Response flow for DescribeAlarmsForMetric -->
+
+    <flow name="DescribeAlarmsForMetricRequest">
+        <component>
+            <spring-object bean="DescribeAlarmsForMetricWorker"/>
+        </component>
+
+        <flow-ref name="DescribeAlarmsForMetricResponse"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+
+    <flow name="DescribeAlarmsForMetricResponse" >
+        <choice>
+            <when expression="#[org.mule.util.StringUtils.isNotEmpty(sessionVars['returnAddress'])]">
+                <processor ref="zmqReturnProcessor"/>
+            </when>
+            <otherwise>
+                <component>
+                    <spring-object bean="DescribeAlarmsForMetric"/>
+                </component>
+            </otherwise>
+        </choice>
+        <flow-ref name="ClientResponder"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+
+    <!-- Request/Response flow for DescribeAlarmHistory -->
+
+    <flow name="DescribeAlarmHistoryRequest">
+        <component>
+            <spring-object bean="DescribeAlarmHistoryWorker"/>
+        </component>
+
+        <flow-ref name="DescribeAlarmHistoryResponse"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+
+    <flow name="DescribeAlarmHistoryResponse" >
+        <choice>
+            <when expression="#[org.mule.util.StringUtils.isNotEmpty(sessionVars['returnAddress'])]">
+                <processor ref="zmqReturnProcessor"/>
+            </when>
+            <otherwise>
+                <component>
+                    <spring-object bean="DescribeAlarmHistory"/>
+                </component>
+            </otherwise>
+        </choice>
+        <flow-ref name="ClientResponder"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+
+    <!-- Request/Response flow for GetMetricStatistics -->
+
+    <flow name="GetMetricStatisticsRequest">
+        <component>
+            <spring-object bean="GetMetricStatisticsWorker"/>
+        </component>
+
+        <flow-ref name="GetMetricStatisticsResponse"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+
+    <flow name="GetMetricStatisticsResponse" >
+        <choice>
+            <when expression="#[org.mule.util.StringUtils.isNotEmpty(sessionVars['returnAddress'])]">
+                <processor ref="zmqReturnProcessor"/>
+            </when>
+            <otherwise>
+                <component>
+                    <spring-object bean="GetMetricStatistics"/>
+                </component>
+            </otherwise>
+        </choice>
+        <flow-ref name="ClientResponder"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+    <!-- Request/Response flow for ListMetrics -->
+
+    <flow name="ListMetricsRequest">
+        <component>
+            <spring-object bean="ListMetricsWorker"/>
+        </component>
+
+        <flow-ref name="ListMetricsResponse"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+
+    <flow name="ListMetricsResponse" >
+        <choice>
+            <when expression="#[org.mule.util.StringUtils.isNotEmpty(sessionVars['returnAddress'])]">
+                <processor ref="zmqReturnProcessor"/>
+            </when>
+            <otherwise>
+                <component>
+                    <spring-object bean="ListMetrics"/>
+                </component>
+            </otherwise>
+        </choice>
+        <flow-ref name="ClientResponder"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+
+    <!-- Request/Response flow for PutMetricAlarm -->
+
+    <flow name="PutMetricAlarmRequest">
+        <component>
+            <spring-object bean="PutMetricAlarmWorker"/>
+        </component>
+
+        <flow-ref name="PutMetricAlarmResponse"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+
+    <flow name="PutMetricAlarmResponse" >
+        <choice>
+            <when expression="#[org.mule.util.StringUtils.isNotEmpty(sessionVars['returnAddress'])]">
+                <processor ref="zmqReturnProcessor"/>
+            </when>
+            <otherwise>
+                <component>
+                    <spring-object bean="PutMetricAlarm"/>
+                </component>
+            </otherwise>
+        </choice>
+        <flow-ref name="ClientResponder"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+
+    <!-- Request/Response flow for PutMetricData -->
+
+    <flow name="PutMetricDataRequest">
+        <component>
+            <spring-object bean="PutMetricDataWorker"/>
+        </component>
+
+        <flow-ref name="PutMetricDataResponse"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+
+    <flow name="PutMetricDataResponse" >
+        <choice>
+            <when expression="#[org.mule.util.StringUtils.isNotEmpty(sessionVars['returnAddress'])]">
+                <processor ref="zmqReturnProcessor"/>
+            </when>
+            <otherwise>
+                <component>
+                    <spring-object bean="PutMetricData"/>
+                </component>
+            </otherwise>
+        </choice>
+        <flow-ref name="ClientResponder"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+
+    <!-- Request/Response flow for SetAlarmState -->
+
+    <flow name="SetAlarmStateRequest">
+        <component>
+            <spring-object bean="SetAlarmStateWorker"/>
+        </component>
+
+        <flow-ref name="SetAlarmStateResponse"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+
+    <flow name="SetAlarmStateResponse" >
+        <choice>
+            <when expression="#[org.mule.util.StringUtils.isNotEmpty(sessionVars['returnAddress'])]">
+                <processor ref="zmqReturnProcessor"/>
+            </when>
+            <otherwise>
+                <component>
+                    <spring-object bean="SetAlarmState"/>
+                </component>
+            </otherwise>
+        </choice>
+        <flow-ref name="ClientResponder"/>
+        <exception-strategy ref="sendErrorBack"/>
+    </flow>
+
+    <!-- General system flows -->
+
+    <flow name="ZMQResponder">
+        <log-component />
+        <processor ref="zmqReturnProcessor"/>
+    </flow>
+
+    <flow name="ClientResponder">
+        <component>
+            <spring-object bean="monitorQueryServiceAsync"/>
+        </component>
+    </flow>
+
+    <!-- Handle any unexpected errors. Errors could also be routed elsewhere,
+        e.g. into an error file, send via email to a list, stored in a database, etc. -->
+    <flow name="SystemErrorHandler">
+        <inbound-endpoint ref="SystemErrorHandlerIn"/>
+        <choice>
+            <when expression="#[org.mule.util.StringUtils.isNotEmpty(sessionVars['returnAddress'])]">
+                <flow-ref name="ZMQResponder"/>
+            </when>
+            <otherwise>
+                <flow-ref name="ClientResponder"/>
+            </otherwise>
+        </choice>
+    </flow>
+
+</mule>

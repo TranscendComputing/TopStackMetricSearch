@@ -1,0 +1,37 @@
+import "MetricAlarm.proto";
+package topstack_MonitorQuery;
+
+option java_package = "com.transcend.monitor.message";
+option java_outer_classname = "GetMetricStatisticsMessage";
+
+message GetMetricStatisticsRequest {
+    required bool typeId = 412;
+    required string requestId = 1;
+    required string callerAccessKey = 2;
+    optional string action = 3 [default = ""];
+    required string namespace = 4;
+    required string metricName = 5;
+    repeated Dimension dimension = 6;
+    optional string startTime = 7;
+    optional string endTime = 8;
+    repeated Statistic statistic = 9;
+    optional uint32 period = 10;
+    optional Unit unit = 11;
+}
+
+message GetMetricStatisticsResponse {
+    required bool typeId = 413;
+    required string requestId = 1;
+    required string callerAccessKey = 2;
+    required string label = 3;
+    message Datapoint {
+        required string timestamp = 1;
+        optional double sampleCount = 2;
+        optional double average = 3;
+        optional double sum = 4;
+        optional double minimum = 5;
+        optional double maximum = 6;
+        optional Unit unit = 7;
+    }
+    repeated Datapoint dataPoint = 4;
+}
