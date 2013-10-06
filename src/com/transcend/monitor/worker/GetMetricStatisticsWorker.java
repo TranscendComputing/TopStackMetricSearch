@@ -26,6 +26,7 @@ import com.transcend.monitor.message.GetMetricStatisticsMessage.GetMetricStatist
 import com.transcend.monitor.message.GetMetricStatisticsMessage.GetMetricStatisticsResponse;
 import com.transcend.monitor.message.GetMetricStatisticsMessage.GetMetricStatisticsResponse.Datapoint;
 import com.transcend.monitor.message.MetricAlarmMessage.Dimension;
+import com.transcend.monitor.message.MetricAlarmMessage.Statistic;
 import com.transcend.monitor.message.MetricAlarmMessage.Unit;
 
 public class GetMetricStatisticsWorker extends
@@ -100,19 +101,19 @@ public class GetMetricStatisticsWorker extends
         while (startDate.before(endTime.getTime())) {
             endTick.setTime(endTick.getTime() + request.getPeriod() * 1000);
             QueryBuilder builder = new QueryBuilder("SELECT 1");
-            if (request.getStatisticList().contains("Sum")) {
+            if (request.getStatisticList().contains(Statistic.Sum)) {
                 builder.append(", sum(m.value) as Sum");
             }
-            if (request.getStatisticList().contains("Maximum")) {
+            if (request.getStatisticList().contains(Statistic.Maximum)) {
                 builder.append(", max(m.value) as Maximum");
             }
-            if (request.getStatisticList().contains("Minimum")) {
+            if (request.getStatisticList().contains(Statistic.Minimum)) {
                 builder.append(", min(m.value) as Minimum");
             }
-            if (request.getStatisticList().contains("Average")) {
+            if (request.getStatisticList().contains(Statistic.Average)) {
                 builder.append(", avg(m.value) as Average");
             }
-            if (request.getStatisticList().contains("SampleCount")) {
+            if (request.getStatisticList().contains(Statistic.SampleCount)) {
                 builder.append(", count(m.value) as SampleCount");
             }
             builder.append(", min(m.timestamp) as Timestamp");
@@ -129,19 +130,19 @@ public class GetMetricStatisticsWorker extends
             int index = 1;
             for (final Object[] row : rows) {
                 final Datapoint.Builder dp = Datapoint.newBuilder();
-                if (request.getStatisticList().contains("Sum")) {
+                if (request.getStatisticList().contains(Statistic.Sum)) {
                     dp.setSum(row[index] != null ? (Double) row[index++] : 0.0);
                 }
-                if (request.getStatisticList().contains("Maximum")) {
+                if (request.getStatisticList().contains(Statistic.Maximum)) {
                     dp.setMaximum(row[index] != null ? (Double) row[index++] : 0.0);
                 }
-                if (request.getStatisticList().contains("Minimum")) {
+                if (request.getStatisticList().contains(Statistic.Minimum)) {
                     dp.setMinimum(row[index] != null ? (Double) row[index++] : 0.0);
                 }
-                if (request.getStatisticList().contains("Average")) {
+                if (request.getStatisticList().contains(Statistic.Average)) {
                     dp.setAverage(row[index] != null ? (Double) row[index++] : 0.0);
                 }
-                if (request.getStatisticList().contains("SampleCount")) {
+                if (request.getStatisticList().contains(Statistic.SampleCount)) {
                     Long val = (Long) row[index++];
                     val = val != null? val : 0;
                     dp.setSampleCount((double) val);
